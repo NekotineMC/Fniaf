@@ -1,0 +1,12 @@
+name: MobaKotlin
+version: '1.0-SNAPSHOT'
+main: fr.nekotine.mobaKotlin.MobaKotlin
+api-version: '1.21.1'
+dependencies:
+  server:
+    ProtocolLib:
+      load: BEFORE
+      required: true
+    CommandAPI:
+      load: BEFORE
+      required: true
