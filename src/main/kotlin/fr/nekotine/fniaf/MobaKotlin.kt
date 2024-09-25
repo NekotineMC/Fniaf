@@ -1,8 +1,8 @@
-package fr.nekotine.mobaKotlin
+package fr.nekotine.fnaf
 
 import org.bukkit.plugin.java.JavaPlugin
 
-class MobaKotlin : JavaPlugin() {
+class FnIAf : JavaPlugin() {
 
     override fun onEnable() {
         // Plugin startup logic

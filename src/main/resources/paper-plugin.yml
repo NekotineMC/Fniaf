@@ -1,6 +1,6 @@
 name: MobaKotlin
 version: '1.0-SNAPSHOT'
-main: fr.nekotine.mobaKotlin.MobaKotlin
+main: fr.nekotine.fniaf.FnIAf
 api-version: '1.21.1'
 dependencies:
   server:
