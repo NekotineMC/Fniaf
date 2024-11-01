@@ -6,7 +6,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.+"
 }
 
-val group = "fr.xxgoldenbluexx"
+val group = "fr.nekotinemc"
 val version = "1.0-SNAPSHOT"
 
 repositories {
