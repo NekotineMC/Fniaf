@@ -1,4 +1,4 @@
-package fr.nekotine.fnaf
+package fr.nekotine.fniaf
 
 import org.bukkit.plugin.java.JavaPlugin
 
