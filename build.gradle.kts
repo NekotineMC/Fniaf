@@ -58,7 +58,7 @@ tasks.register<Copy>("dev") {
     dependsOn("build")
     group = "developpement"
     description = "Envoie le jar sur le server de développement"
-    from("build/libs/$name-all.jar")
+    from("build/libs/${project.name}-all.jar")
     into(devServerPluginDirectory)
 }
 
