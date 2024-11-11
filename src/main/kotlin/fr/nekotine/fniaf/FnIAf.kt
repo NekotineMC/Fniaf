@@ -159,7 +159,6 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
         timetask?.cancel();
         timetask = null;
         for (p in players()){
-            println(p.displayName().toString());
             playersnapshots[p]?.patch(p)
         }
         sendMessage(Component.text("La partie est finie",NamedTextColor.GOLD))
