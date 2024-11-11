@@ -10,3 +10,6 @@ dependencies:
     CommandAPI:
       load: BEFORE
       required: true
+    FastAsyncWorldEdit:
+      load: BEFORE
+      required: true
