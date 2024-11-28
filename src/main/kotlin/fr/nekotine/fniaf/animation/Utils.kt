@@ -1,4 +1,4 @@
-package fr.nekotine.fniaf.animation.tree
+package fr.nekotine.fniaf.animation
 
 import org.joml.AxisAngle4d
 import org.joml.Math
