@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(group="io.papermc.paper", name="paper-api", version="1.21.1-R0.1-SNAPSHOT")
+    compileOnly(group="io.papermc.paper", name="paper-api", version="1.21.3-R0.1-SNAPSHOT")
     implementation(group="org.jetbrains.kotlin", name="kotlin-stdlib", version="+")
     implementation(":NekotineCore")
     compileOnly(group="com.comphenix.protocol", name="ProtocolLib", version="+")
