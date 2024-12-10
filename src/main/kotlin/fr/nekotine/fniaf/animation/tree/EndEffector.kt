@@ -1,7 +1,8 @@
 package fr.nekotine.fniaf.animation.tree
 
-import fr.nekotine.fniaf.animation.copy
-import fr.nekotine.fniaf.animation.toAxisAngle
+import fr.nekotine.fniaf.animation.math.copy
+import fr.nekotine.fniaf.animation.math.toAxisAngle
+import fr.nekotine.fniaf.animation.observer.Observable
 import org.joml.Math
 import org.joml.Quaterniond
 import org.joml.Vector3d
@@ -10,7 +11,8 @@ class EndEffector (
     var parent:KinematicJoint?,
     var name:String,
     var localPosition: Vector3d
-){
+) : Observable()
+{
     constructor():this (null,"",Vector3d())
 
     val globalPosition: Vector3d = localPosition.copy()
@@ -19,11 +21,11 @@ class EndEffector (
         var joint = this.parent
         val rotationTo = Quaterniond()
 
-        for (r in 1..maxIteration) {
+        outer@ for (r in 1..maxIteration) {
             while(joint != null) {
 
                 if(this.globalPosition.distanceSquared(goal) <= squaredTolerance) {
-                    return
+                    break@outer
                 }
 
                 //compute rotation

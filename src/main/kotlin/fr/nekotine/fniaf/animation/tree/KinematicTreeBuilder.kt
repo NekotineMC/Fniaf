@@ -1,6 +1,6 @@
 package fr.nekotine.fniaf.animation.tree
 
-import fr.nekotine.fniaf.animation.copy
+import fr.nekotine.fniaf.animation.math.copy
 import org.joml.Quaterniond
 import org.joml.Vector3d
 

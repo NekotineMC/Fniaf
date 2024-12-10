@@ -1,6 +1,7 @@
 package fr.nekotine.fniaf.animation.tree
 
-import fr.nekotine.fniaf.animation.copy
+import fr.nekotine.fniaf.animation.math.copy
+import fr.nekotine.fniaf.animation.observer.Observable
 import org.joml.Quaterniond
 import org.joml.Vector3d
 
@@ -13,7 +14,7 @@ class KinematicJoint (
     var localRotation: Quaterniond,
     var axis: Vector3d?,
     var clampedAngleDegrees: Pair<Double,Double>?
-)
+) : Observable()
 {
     constructor(): this(null, ArrayList(), ArrayList(), "", Vector3d(), Quaterniond(), null,null)
 
@@ -37,5 +38,8 @@ class KinematicJoint (
         this.effectors.forEach { effector ->
             effector.globalPosition.set(globalPosition.copy().add(effector.localPosition.copy().rotate(globalRotation)))
         }
+
+        notifySubscribers()
+        this.effectors.forEach { effector -> effector.notifySubscribers()}
     }
 }

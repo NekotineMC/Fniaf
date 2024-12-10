@@ -1,9 +1,6 @@
-package fr.nekotine.fniaf.animation
+package fr.nekotine.fniaf.animation.math
 
-import org.joml.AxisAngle4d
-import org.joml.Math
-import org.joml.Quaterniond
-import org.joml.Vector3d
+import org.joml.*
 
 fun Quaterniond.toAxisAngle(): AxisAngle4d {
     val angle = 2.0 * Math.acos(this.w)
@@ -18,4 +15,10 @@ fun Quaterniond.copy(): Quaterniond {
 }
 fun Vector3d.copy(): Vector3d {
     return Vector3d(this)
+}
+fun Vector3d.toVector3f(): Vector3f {
+    return Vector3f(this.x.toFloat(), this.y.toFloat(), this.z.toFloat())
+}
+fun Quaterniond.toQuaternionf(): Quaternionf {
+    return Quaternionf(this)
 }

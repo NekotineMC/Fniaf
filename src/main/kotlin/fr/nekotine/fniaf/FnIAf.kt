@@ -5,7 +5,12 @@ import fr.nekotine.core.ioc.Ioc
 import fr.nekotine.core.setup.PluginBuilder
 import fr.nekotine.core.snapshot.PlayerStatusSnaphot
 import fr.nekotine.core.snapshot.Snapshot
+import fr.nekotine.core.ticking.TickingModule
 import fr.nekotine.core.util.EventUtil
+import fr.nekotine.fniaf.animation.humanoid.Humanoid
+import fr.nekotine.fniaf.animation.tree.EndEffector
+import fr.nekotine.fniaf.animation.tree.KinematicJoint
+import fr.nekotine.fniaf.animation.tree.KinematicTreeBuilder
 import fr.nekotine.fniaf.map.FniafMap
 import fr.nekotine.fniaf.wrapper.AnimatronicController
 import fr.nekotine.fniaf.wrapper.Survivor
@@ -17,19 +22,28 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
-import org.bukkit.entity.Player
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.World
+import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
+import org.bukkit.util.Transformation
+import org.joml.*
 import java.time.Duration
 
 class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
-
-    lateinit var nekotinePlugin: NekotinePlugin
+    companion object {
+        lateinit var nekotinePlugin: NekotinePlugin
+        lateinit var javaPlugin: JavaPlugin
+    }
 
     val survivors = ArrayList<Survivor>()
 
@@ -52,7 +66,9 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
         super.onLoad();
         val builder = PluginBuilder(this);
         builder.mapCommandsFor(FniafMap::class.java);
+
         nekotinePlugin = builder.build();
+        javaPlugin = this
     }
 
     override fun onEnable() {
@@ -61,7 +77,168 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
             .registerSingleton(this)
             .registerSingletonInstanceAs(this, JavaPlugin::class.java);
         Commands.registerCommands();
+
+
+        /*world = Bukkit.getWorlds()[0]
+        id1 = (world!!.spawnEntity(Location(world,.0, .0 , .0 ), EntityType.ITEM_DISPLAY)) as ItemDisplay
+        id2 = (world!!.spawnEntity(Location(world,.0, .0, .0), EntityType.ITEM_DISPLAY)) as ItemDisplay
+        id3 = (world!!.spawnEntity(Location(world,.0, .0, .0), EntityType.ITEM_DISPLAY)) as ItemDisplay
+        id4 = (world!!.spawnEntity(Location(world,.0, .0, .0), EntityType.ITEM_DISPLAY)) as ItemDisplay
+        endAffectorId = (world!!.spawnEntity(Location(world,.0, .0, .0), EntityType.ITEM_DISPLAY)) as ItemDisplay
+        otherId = (world!!.spawnEntity(Location(world,.0, .0, .0), EntityType.ITEM_DISPLAY)) as ItemDisplay
+        goalId = (world!!.spawnEntity(Location(world,.0, .0, .0), EntityType.ITEM_DISPLAY)) as ItemDisplay*/
+        /*kc = KinematicChainBuilder().addLocalJoint(
+            Vector3d(.0,75.0,.0),
+            Vector3d(.0,.0,1.0),
+            null,
+        ).addLocalJoint(
+            Vector3d(.0,.5,.0),
+            null,
+            Pair(.0,.0),
+        ).addLocalJoint(
+            Vector3d(0.0,1.0,.0),
+            null,
+            Pair(.0,.0),
+        ).addLocalJoint(
+            Vector3d(.0,.5,.0),
+            null,
+            Pair(-90.0,90.0),
+        ).addLocalEndEffector(
+            Vector3d(.0,.25,.0))
+        kinematicJoint1 = kc!!.kinematicJoints[0]
+        kinematicJoint2 = kc!!.kinematicJoints[1]
+        kinematicJoint3 = kc!!.kinematicJoints[2]
+        kinematicJoint4 = kc!!.kinematicJoints[3]*/
+        /*kinematicJoint1 = KinematicJoint()
+        kinematicJoint2 = KinematicJoint()
+        kinematicJoint3 = KinematicJoint()
+        kinematicJoint4 = KinematicJoint()
+        endEffector = EndEffector()
+        otherEffect = EndEffector()
+
+        KinematicTreeBuilder("1", Vector3d(.0,75.0,.0), Quaterniond(), Vector3d(.0,.0,1.0),Pair(-90.0,90.0))
+            .addEffector("other", Vector3d(-1.0, .0, .0), otherEffect!!)
+            .addNode(
+                KinematicTreeBuilder("2", Vector3d(.0,.5,.0), Quaterniond(), null,Pair(.0,.0))
+                    .addNode(
+                        KinematicTreeBuilder("3", Vector3d(0.0,1.0,.0), Quaterniond(), null,Pair(.0,.0))
+                            .addNode(
+                                KinematicTreeBuilder("4", Vector3d(.0,.5,.0), Quaterniond(), null,Pair(-90.0,90.0))
+                                    .addEffector("end", Vector3d(.0,.25,.0), endEffector!!)
+                                    .build(kinematicJoint4!!)
+                            )
+                            .build(kinematicJoint3!!)
+                    )
+                    .build(kinematicJoint2!!)
+            )
+            .build(kinematicJoint1!!)
+
+        id1!!.setItemStack ( ItemStack(Material.BIRCH_STAIRS))
+        id2!!.setItemStack (ItemStack(Material.BIRCH_STAIRS))
+        id3!!.setItemStack (ItemStack(Material.BIRCH_STAIRS))
+        id4!!.setItemStack (ItemStack(Material.BIRCH_STAIRS))
+        endAffectorId!!.setItemStack (ItemStack(Material.IRON_BLOCK))
+        otherId!!.setItemStack (ItemStack(Material.IRON_BLOCK))
+        goalId!!.setItemStack (ItemStack(Material.EMERALD_BLOCK))
+        //val scaleMatrix = Matrix4f().scale(0.5f)
+        var scaleMatrix = Transformation(Vector3f(), AxisAngle4f(), Vector3f(0.1f,0.1f,0.1f),AxisAngle4f())
+        id1!!.transformation = scaleMatrix
+        id2!!.transformation = scaleMatrix
+        id3!!.transformation = scaleMatrix
+        endAffectorId!!.transformation = scaleMatrix
+        otherId!!.transformation = scaleMatrix
+        goalId!!.transformation = scaleMatrix
+        id1!!.interpolationDelay = 1
+        id1!!.interpolationDuration = 1
+        id2!!.interpolationDelay = 1
+        id2!!.interpolationDuration = 1
+        id3!!.interpolationDelay = 1
+        id3!!.interpolationDuration = 1
+        id4!!.interpolationDelay = 1
+        id4!!.interpolationDuration = 1*/
     }
+    /*var world:World?=null
+    var kinematicJoint1:KinematicChain.KinematicJoint? = null
+    var kinematicJoint2:KinematicChain.KinematicJoint? = null
+    var kinematicJoint3:KinematicChain.KinematicJoint? = null
+    var kinematicJoint4:KinematicChain.KinematicJoint? = null
+    var kc:KinematicChain?=null*/
+    /*var kinematicJoint1:KinematicJoint? = null
+    var kinematicJoint2:KinematicJoint? = null
+    var kinematicJoint3:KinematicJoint? = null
+    var kinematicJoint4:KinematicJoint? = null
+    var endEffector:EndEffector?=null
+    var otherEffect:EndEffector?=null
+    var id1:ItemDisplay? = null
+    var id2:ItemDisplay? = null
+    var id3:ItemDisplay? = null
+    var id4:ItemDisplay? = null
+    var endAffectorId:ItemDisplay? = null
+    var otherId:ItemDisplay? = null
+    var goalId:ItemDisplay? = null
+    */
+    /*
+
+    @EventHandler
+    fun moveEvent(playerMoveEvent: PlayerMoveEvent){
+        if(playerMoveEvent.player.gameMode == GameMode.CREATIVE){
+
+            /*endEffector!!.ccdik(playerMoveEvent.player.location.toVector().toVector3d() /*Vector3d(5.0,.0,.0)*/)
+            //System.out.println(a[3].toString())
+            id1!!.teleport(Location(world,kinematicJoint1!!.globalPosition.x, kinematicJoint1!!.globalPosition.y , kinematicJoint1!!.globalPosition.z ))
+            id2!!.teleport(Location(world,kinematicJoint2!!.globalPosition.x, kinematicJoint2!!.globalPosition.y , kinematicJoint2!!.globalPosition.z ))
+            id3!!.teleport(Location(world,kinematicJoint3!!.globalPosition.x, kinematicJoint3!!.globalPosition.y , kinematicJoint3!!.globalPosition.z ))
+            id4!!.teleport(Location(world,kinematicJoint4!!.globalPosition.x, kinematicJoint4!!.globalPosition.y , kinematicJoint4!!.globalPosition.z ))
+
+            endAffectorId!!.teleport(Location(world,endEffector!!.globalPosition.x, endEffector!!.globalPosition.y , endEffector!!.globalPosition.z ))
+            otherId!!.teleport(Location(world,otherEffect!!.globalPosition.x, otherEffect!!.globalPosition.y , otherEffect!!.globalPosition.z ))
+
+            goalId!!.teleport(playerMoveEvent.player)
+            //System.out.println("HELLO: " + joint1!!.yaw())
+            //val a = Vector3f(joint1!!.globalPosition.x.toFloat(), joint1!!.globalPosition.y.toFloat(), joint1!!.globalPosition.z.toFloat())
+
+            var t = Transformation(Vector3f(), Quaternionf(kinematicJoint1!!.localRotation), Vector3f(.1f,.1f,.1f), Quaternionf())
+            id1!!.transformation = t
+
+            t = Transformation(Vector3f(), Quaternionf(kinematicJoint2!!.localRotation), Vector3f(.1f,.1f,.1f), Quaternionf())
+            id2!!.transformation = t
+
+            t = Transformation(Vector3f(), Quaternionf(kinematicJoint3!!.localRotation), Vector3f(.1f,.1f,.1f), Quaternionf())
+            id3!!.transformation = t
+
+            t = Transformation(Vector3f(), Quaternionf(kinematicJoint4!!.localRotation), Vector3f(.1f,.1f,.1f), Quaternionf())
+            id4!!.transformation = t
+
+
+            /*id1!!.setRotation(
+                (joint1!!.yaw()).toFloat(),
+                joint1!!.pitch().toFloat()
+                //joint1!!.pitch().toFloat()
+            )*/
+            //System.out.println("HELLO2: " + id1!!.yaw)
+            /*id2!!.setRotation(
+                (joint2!!.yaw()).toFloat(),
+                joint2!!.pitch().toFloat()
+            )
+            id3!!.setRotation(
+                (joint3!!.yaw()).toFloat(),
+                joint3!!.pitch().toFloat()
+            )*/
+            /*System.out.println("start")
+            System.out.println(joint1!!.position.toString())
+            System.out.println(joint2!!.position.toString())
+            System.out.println(joint3!!.position.toString())
+            System.out.println("end")*/
+            /*System.out.println("start")
+            System.out.println(Vector3d(1.0,.0,.0).rotate(joint1!!.quaterniond).toString())
+            System.out.println(Vector3d(1.0,.0,.0).rotate(joint2!!.quaterniond).toString())
+            System.out.println(Vector3d(1.0,.0,.0).rotate(joint3!!.quaterniond).toString())
+            System.out.println("end")*/*/
+        }
+
+
+    }
+    */
 
     override fun onDisable() {
         EventUtil.register(this);
@@ -178,6 +355,7 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
     @EventHandler
     private fun OnPlayerJoin(evt:PlayerJoinEvent){
         joinGame(evt.player);
+        Humanoid(Vector3d(.0,71.5,.0))
     }
 
     @EventHandler
