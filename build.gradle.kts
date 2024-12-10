@@ -31,7 +31,7 @@ repositories {
 dependencies {
     compileOnly(group="io.papermc.paper", name="paper-api", version="1.21.1-R0.1-SNAPSHOT")
     implementation(group="org.jetbrains.kotlin", name="kotlin-stdlib", version="+")
-    implementation(group="fr.nekotine", name="NekotineCore", version="+")
+    implementation(":NekotineCore")
     compileOnly(group="com.comphenix.protocol", name="ProtocolLib", version="+")
     compileOnly(group="dev.jorel", name="commandapi-bukkit-core", version="+")
 }
