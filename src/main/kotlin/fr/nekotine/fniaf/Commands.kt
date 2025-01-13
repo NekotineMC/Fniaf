@@ -66,9 +66,30 @@ class Commands {
                 }});
             team.withSubcommand(teamleaveplayer);
 
+            var status = CommandAPICommand("status")
+                .executes(CommandExecutor { sender, args -> run{
+                    val game = Ioc.resolve(FnIAf::class.java)
+                    sender.sendMessage(Component.text("Started: ${game.isRunning}"))
+
+                    var animatronic = Component.text("Animatronics:").appendNewline()
+                    game.animatronics.forEach{animatronic = animatronic.append(
+                        Component.text(it.getName()+' ')
+                        .append(it.controller?.player?.displayName()?:Component.empty())
+                        .appendNewline())}
+                    animatronic = animatronic.color(NamedTextColor.RED)
+                    sender.sendMessage(animatronic)
+
+                    var survivor = Component.text("Survivors:").appendNewline()
+                    game.survivors.forEach{survivor = survivor.append(
+                        it.controller?.player?.displayName()?.appendNewline() ?: Component.newline())}
+                    survivor = survivor.color(NamedTextColor.BLUE)
+                    sender.sendMessage(survivor)
+                }});
+
             fniafcommand.withSubcommand(start);
             fniafcommand.withSubcommand(stop);
             fniafcommand.withSubcommand(team);
+            fniafcommand.withSubcommand(status);
 
             fniafcommand.register();
 

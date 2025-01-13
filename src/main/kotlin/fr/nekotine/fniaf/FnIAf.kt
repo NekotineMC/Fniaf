@@ -6,14 +6,18 @@ import fr.nekotine.core.setup.PluginBuilder
 import fr.nekotine.core.snapshot.PlayerStatusSnaphot
 import fr.nekotine.core.snapshot.Snapshot
 import fr.nekotine.core.ticking.TickingModule
+import fr.nekotine.core.ticking.event.TickElapsedEvent
 import fr.nekotine.core.util.EventUtil
 import fr.nekotine.fniaf.animation.humanoid.Humanoid
 import fr.nekotine.fniaf.animation.tree.EndEffector
 import fr.nekotine.fniaf.animation.tree.KinematicJoint
 import fr.nekotine.fniaf.animation.tree.KinematicTreeBuilder
+import fr.nekotine.fniaf.foxy.Foxy
 import fr.nekotine.fniaf.map.FniafMap
+import fr.nekotine.fniaf.wrapper.Animatronic
 import fr.nekotine.fniaf.wrapper.AnimatronicController
 import fr.nekotine.fniaf.wrapper.Survivor
+import fr.nekotine.fniaf.wrapper.SurvivorController
 import io.papermc.paper.util.Tick
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.audience.ForwardingAudience
@@ -47,7 +51,7 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
 
     val survivors = ArrayList<Survivor>()
 
-    val animatronics = ArrayList<AnimatronicController>()
+    val animatronics = ArrayList<Animatronic>()
 
     val nbSurvivors: Int
         get() = survivors.size
@@ -77,6 +81,7 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
             .registerSingleton(this)
             .registerSingletonInstanceAs(this, JavaPlugin::class.java);
         Commands.registerCommands();
+        Ioc.resolve(TickingModule::class.java)
 
 
         /*world = Bukkit.getWorlds()[0]
@@ -241,7 +246,7 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
     */
 
     override fun onDisable() {
-        EventUtil.register(this);
+        EventUtil.unregister(this);
         nekotinePlugin.disable();
         super.onDisable();
     }
@@ -260,18 +265,19 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
     }
 
     fun joinSurvivor(p:Player){
-        if (survivors.any { s -> s.player == p}){
+        if (survivors.any { s -> s.controller?.player == p}){
             return
         }
         leaveAnimatronic(p);
         val surv = Survivor();
-        surv.player = p;
+        surv.controller = SurvivorController();
+        surv.controller!!.player = p;
         survivors.add(surv);
         p.sendMessage(Component.text("Vous passez dans l'équipe survivants",NamedTextColor.LIGHT_PURPLE));
     }
 
     fun leaveSurvivors(p:Player){
-        val surv = survivors.firstOrNull { s -> s.player == p };
+        val surv = survivors.firstOrNull { s -> s.controller?.player == p };
         if (surv == null){
             return;
         }
@@ -280,18 +286,19 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
     }
 
     fun joinAnimatronic(p:Player){
-        if (animatronics.any { s -> s.player == p}){
+        if (animatronics.any { s -> s.controller?.player == p}){
             return
         }
         leaveSurvivors(p);
-        val anim = AnimatronicController();
-        anim.player = p;
+        val anim = Foxy()
+        anim.controller = AnimatronicController()
+        anim.controller!!.player = p;
         animatronics.add(anim);
         p.sendMessage(Component.text("Vous passez dans l'équipe animatronique",NamedTextColor.LIGHT_PURPLE));
     }
 
     fun leaveAnimatronic(p:Player){
-        val anim = animatronics.firstOrNull { an -> an.player == p };
+        val anim = animatronics.firstOrNull { an -> an.controller?.player == p };
         if (anim == null){
             return;
         }
@@ -307,14 +314,14 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
         survivors.forEach{ s ->
             run {
                 s.isAlive = true
-                s.player?.let {
+                s.controller?.player?.let {
                     playersnapshots[it] = PlayerStatusSnaphot().snapshot(it);
                 }
             }
         };
         animatronics.forEach{ a ->
             run {
-                a.player?.let {
+                a.controller?.player?.let {
                     it.gameMode = GameMode.ADVENTURE;
                     playersnapshots[it] = PlayerStatusSnaphot().snapshot(it);
                 }
@@ -342,7 +349,8 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
     }
 
     fun players(): Set<Player>{
-        return survivors.filter { s -> s.isPlayer }.map{ s -> s.player!! }.union(animatronics.filter { a -> a.isPlayer }.map{a -> a.player!!});
+        return survivors.filter { s -> s.controller?.isPlayer == true }.map{ s -> s.controller!!.player!! }
+            .union(animatronics.filter { a -> a.controller?.isPlayer == true }.map{ a -> a.controller!!.player!!});
     }
 
     override fun audiences(): MutableIterable<Audience> {
@@ -350,34 +358,36 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
         return players().toMutableSet()
     }
 
-    // --- Events
-
-    @EventHandler
-    private fun OnPlayerJoin(evt:PlayerJoinEvent){
-        joinGame(evt.player);
-        Humanoid(Vector3d(.0,71.5,.0))
-    }
-
-    @EventHandler
-    private fun OnPlayerDisconnect(evt:PlayerQuitEvent){
-        leaveGame(evt.player);
-    }
-
-    @EventHandler
-    private fun OnPlayerDeath(evt:PlayerDeathEvent){
+    fun checkGameEnd(){
         if (!isRunning){
             return;
         }
-        val survivor = survivors.firstOrNull { s -> s.player == evt.player }
-        if (survivor == null){
-            return;
-        }
-        evt.isCancelled = true;
-        survivor.isAlive = false;
         if (survivors.all { s -> !s.isAlive }){
             showTitle(Title.title(Component.text("Victoire des animatronics",NamedTextColor.GOLD),Component.empty(), Title.Times.times(
                 Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofSeconds(1))));
             stopGame();
         }
+    }
+
+    // --- Events
+
+    @EventHandler
+    private fun OnTick(evt: TickElapsedEvent) {
+        if (!isRunning){
+            return;
+        }
+        animatronics.forEach{ it.tick() }
+        survivors.forEach { it.tick() }
+    }
+
+    @EventHandler
+    private fun OnPlayerJoin(evt:PlayerJoinEvent){
+        joinGame(evt.player);
+        //Humanoid(Vector3d(.0,71.5,.0))
+    }
+
+    @EventHandler
+    private fun OnPlayerDisconnect(evt:PlayerQuitEvent){
+        leaveGame(evt.player);
     }
 }
