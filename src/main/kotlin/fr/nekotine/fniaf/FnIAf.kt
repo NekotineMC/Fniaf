@@ -2,20 +2,19 @@ package fr.nekotine.fniaf
 
 import fr.nekotine.core.NekotinePlugin
 import fr.nekotine.core.ioc.Ioc
+import fr.nekotine.core.map.IMapModule
+import fr.nekotine.core.map.MapMetadata
+import fr.nekotine.core.map.MapModule
 import fr.nekotine.core.setup.PluginBuilder
-import fr.nekotine.core.snapshot.PlayerStatusSnaphot
-import fr.nekotine.core.snapshot.Snapshot
 import fr.nekotine.core.ticking.TickingModule
 import fr.nekotine.core.ticking.event.TickElapsedEvent
 import fr.nekotine.core.util.EventUtil
 import fr.nekotine.fniaf.animatronic.Foxy
+import fr.nekotine.fniaf.control.player.PlayerAnimatronicController
+import fr.nekotine.fniaf.control.player.PlayerSurvivorController
 import fr.nekotine.fniaf.map.FniafMap
-import fr.nekotine.fniaf.playercontrol.PlayerAnimatronicController
-import fr.nekotine.fniaf.playercontrol.PlayerSurvivorController
 import fr.nekotine.fniaf.wrapper.Animatronic
-import fr.nekotine.fniaf.wrapper.AnimatronicController
 import fr.nekotine.fniaf.wrapper.Survivor
-import fr.nekotine.fniaf.wrapper.SurvivorController
 import io.papermc.paper.util.Tick
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.audience.ForwardingAudience
@@ -23,7 +22,6 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.Bukkit
-import org.bukkit.GameMode
 import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -32,6 +30,7 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
 import java.time.Duration
+import java.util.function.Supplier
 
 class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
     companion object {
@@ -58,6 +57,7 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
         super.onLoad();
         val builder = PluginBuilder(this);
         builder.mapCommandsFor(FniafMap::class.java);
+        builder.preloadModules(MapModule::class.java);
 
         nekotinePlugin = builder.build();
         javaPlugin = this
@@ -70,6 +70,17 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
             .registerSingletonInstanceAs(this, JavaPlugin::class.java);
         Commands.registerCommands();
         Ioc.resolve(TickingModule::class.java)
+        val mm = Ioc.resolve(IMapModule::class.java)
+        if (mm.listMaps().any { it.name == "debugMap" }){
+            val meta = mm.getMapMetadata("debugMap")
+            Ioc.getProvider().registerSingleton(mm.getContent<FniafMap>(mm.getMapMetadata("debugMap")!!, FniafMap::class.java))
+        }else{
+            val meta = MapMetadata("debugMap")
+            val map = FniafMap(null)
+            mm.saveMapMetadata(meta)
+            mm.saveContent(meta, map)
+            Ioc.getProvider().registerSingleton(map)
+        }
 
 
         /*world = Bukkit.getWorlds()[0]

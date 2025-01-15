@@ -3,6 +3,8 @@ package fr.nekotine.fniaf.animatronic
 import fr.nekotine.core.ioc.Ioc
 import fr.nekotine.fniaf.FnIAf
 import fr.nekotine.fniaf.wrapper.Animatronic
+import net.kyori.adventure.text.Component
+import org.bukkit.Bukkit
 
 class Foxy : Animatronic() {
 

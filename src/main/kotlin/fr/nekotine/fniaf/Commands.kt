@@ -5,6 +5,8 @@ import dev.jorel.commandapi.arguments.EntitySelectorArgument
 import dev.jorel.commandapi.executors.CommandExecutor
 import dev.jorel.commandapi.executors.PlayerCommandExecutor
 import fr.nekotine.core.ioc.Ioc
+import fr.nekotine.fniaf.control.player.PlayerAnimatronicController
+import fr.nekotine.fniaf.control.player.PlayerSurvivorController
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Player
@@ -74,14 +76,14 @@ class Commands {
                     var animatronic = Component.text("Animatronics:").appendNewline()
                     game.animatronics.forEach{animatronic = animatronic.append(
                         Component.text(it.getName()+' ')
-                        .append(it.controller?.player?.displayName()?:Component.empty())
+                        .append((it.controller as? PlayerAnimatronicController)?.player?.displayName()?:Component.empty())
                         .appendNewline())}
                     animatronic = animatronic.color(NamedTextColor.RED)
                     sender.sendMessage(animatronic)
 
                     var survivor = Component.text("Survivors:").appendNewline()
                     game.survivors.forEach{survivor = survivor.append(
-                        it.controller?.player?.displayName()?.appendNewline() ?: Component.newline())}
+                        (it.controller as? PlayerSurvivorController)?.player?.displayName()?.appendNewline() ?: Component.newline())}
                     survivor = survivor.color(NamedTextColor.BLUE)
                     sender.sendMessage(survivor)
                 }});

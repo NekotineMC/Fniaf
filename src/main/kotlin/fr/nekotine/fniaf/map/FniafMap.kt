@@ -1,13 +1,18 @@
 package fr.nekotine.fniaf.map
 
+import fr.nekotine.core.map.annotation.GenerateCommandFor
 import fr.nekotine.core.serialization.configurationserializable.ConfigurationSerializableAdapted
-import org.bukkit.Bukkit
+import fr.nekotine.core.serialization.configurationserializable.annotation.ComposingConfiguration
 import org.bukkit.Location
 
 class FniafMap(dict: MutableMap<String, Any>?) : ConfigurationSerializableAdapted(dict) {
 
-    var playerSpawn : Location = Bukkit.getWorlds().first().spawnLocation
+    @ComposingConfiguration
+    @GenerateCommandFor
+    lateinit var playerSpawn : Location
 
-    var animSpawn : Location = Bukkit.getWorlds().first().spawnLocation
+    @ComposingConfiguration
+    @GenerateCommandFor
+    lateinit var animSpawn : Location
 
 }
