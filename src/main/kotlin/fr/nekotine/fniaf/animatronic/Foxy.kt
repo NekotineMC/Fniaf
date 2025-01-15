@@ -1,4 +1,4 @@
-package fr.nekotine.fniaf.foxy
+package fr.nekotine.fniaf.animatronic
 
 import fr.nekotine.core.ioc.Ioc
 import fr.nekotine.fniaf.FnIAf

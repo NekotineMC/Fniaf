@@ -8,12 +8,10 @@ import fr.nekotine.core.snapshot.Snapshot
 import fr.nekotine.core.ticking.TickingModule
 import fr.nekotine.core.ticking.event.TickElapsedEvent
 import fr.nekotine.core.util.EventUtil
-import fr.nekotine.fniaf.animation.humanoid.Humanoid
-import fr.nekotine.fniaf.animation.tree.EndEffector
-import fr.nekotine.fniaf.animation.tree.KinematicJoint
-import fr.nekotine.fniaf.animation.tree.KinematicTreeBuilder
-import fr.nekotine.fniaf.foxy.Foxy
+import fr.nekotine.fniaf.animatronic.Foxy
 import fr.nekotine.fniaf.map.FniafMap
+import fr.nekotine.fniaf.playercontrol.PlayerAnimatronicController
+import fr.nekotine.fniaf.playercontrol.PlayerSurvivorController
 import fr.nekotine.fniaf.wrapper.Animatronic
 import fr.nekotine.fniaf.wrapper.AnimatronicController
 import fr.nekotine.fniaf.wrapper.Survivor
@@ -26,21 +24,13 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
-import org.bukkit.Location
-import org.bukkit.Material
-import org.bukkit.World
 import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
-import org.bukkit.util.Transformation
-import org.joml.*
 import java.time.Duration
 
 class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
@@ -63,8 +53,6 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
 
     val isRunning: Boolean
         get() = !(timetask?.isCancelled ?: true)
-
-    var playersnapshots: MutableMap<Player, Snapshot<Player>> = LinkedHashMap()
 
     override fun onLoad() {
         super.onLoad();
@@ -265,19 +253,18 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
     }
 
     fun joinSurvivor(p:Player){
-        if (survivors.any { s -> s.controller?.player == p}){
+        if (survivors.any { s -> s.controller != null && s.controller is PlayerSurvivorController && (s.controller as PlayerSurvivorController).player == p}){
             return
         }
         leaveAnimatronic(p);
         val surv = Survivor();
-        surv.controller = SurvivorController();
-        surv.controller!!.player = p;
+        surv.controller = PlayerSurvivorController(p);
         survivors.add(surv);
         p.sendMessage(Component.text("Vous passez dans l'équipe survivants",NamedTextColor.LIGHT_PURPLE));
     }
 
     fun leaveSurvivors(p:Player){
-        val surv = survivors.firstOrNull { s -> s.controller?.player == p };
+        val surv = survivors.firstOrNull { s -> s.controller != null && s.controller is PlayerSurvivorController && (s.controller as PlayerSurvivorController).player == p };
         if (surv == null){
             return;
         }
@@ -286,19 +273,18 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
     }
 
     fun joinAnimatronic(p:Player){
-        if (animatronics.any { s -> s.controller?.player == p}){
+        if (animatronics.any { a -> a.controller != null && a.controller is PlayerAnimatronicController && (a.controller as PlayerAnimatronicController).player == p }){
             return
         }
         leaveSurvivors(p);
         val anim = Foxy()
-        anim.controller = AnimatronicController()
-        anim.controller!!.player = p;
+        anim.controller = PlayerAnimatronicController(p)
         animatronics.add(anim);
         p.sendMessage(Component.text("Vous passez dans l'équipe animatronique",NamedTextColor.LIGHT_PURPLE));
     }
 
     fun leaveAnimatronic(p:Player){
-        val anim = animatronics.firstOrNull { an -> an.controller?.player == p };
+        val anim = animatronics.firstOrNull { a -> a.controller != null && a.controller is PlayerAnimatronicController && (a.controller as PlayerAnimatronicController).player == p };
         if (anim == null){
             return;
         }
@@ -314,19 +300,10 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
         survivors.forEach{ s ->
             run {
                 s.isAlive = true
-                s.controller?.player?.let {
-                    playersnapshots[it] = PlayerStatusSnaphot().snapshot(it);
-                }
+                s.controller?.onGameStart()
             }
         };
-        animatronics.forEach{ a ->
-            run {
-                a.controller?.player?.let {
-                    it.gameMode = GameMode.ADVENTURE;
-                    playersnapshots[it] = PlayerStatusSnaphot().snapshot(it);
-                }
-            }
-        };
+        animatronics.forEach{ a -> a.controller?.onGameStart() }
         timetask = Bukkit.getScheduler().runTaskLater(this, Runnable
             {
                 showTitle(Title.title(Component.text("Victoire des survivants",NamedTextColor.GOLD),Component.empty(), Title.Times.times(
@@ -340,17 +317,16 @@ class FnIAf : JavaPlugin(), Listener, ForwardingAudience{
         if (!isRunning){
             return;
         }
-        timetask?.cancel();
-        timetask = null;
-        for (p in players()){
-            playersnapshots[p]?.patch(p)
-        }
+        timetask?.cancel()
+        timetask = null
+        survivors.forEach{ s -> s.controller?.onGameStop()}
+        animatronics.forEach{ s -> s.controller?.onGameStop()}
         sendMessage(Component.text("La partie est finie",NamedTextColor.GOLD))
     }
 
     fun players(): Set<Player>{
-        return survivors.filter { s -> s.controller?.isPlayer == true }.map{ s -> s.controller!!.player!! }
-            .union(animatronics.filter { a -> a.controller?.isPlayer == true }.map{ a -> a.controller!!.player!!});
+        return survivors.filter { s -> s.controller != null && s.controller is PlayerSurvivorController }.map{ s -> (s.controller as PlayerSurvivorController).player }
+            .union(animatronics.filter { a -> a.controller != null && a.controller is PlayerAnimatronicController }.map{ a -> (a.controller as PlayerAnimatronicController).player});
     }
 
     override fun audiences(): MutableIterable<Audience> {

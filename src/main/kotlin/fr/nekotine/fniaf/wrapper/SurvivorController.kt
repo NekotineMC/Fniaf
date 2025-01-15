@@ -1,8 +1,6 @@
 package fr.nekotine.fniaf.wrapper
 
-import org.bukkit.entity.Player
-
-class SurvivorController {
+abstract class SurvivorController {
 
     var survivor: Survivor? = null
         set(value) {
@@ -12,24 +10,12 @@ class SurvivorController {
             }
         }
 
-    var player: Player? = null;
+    abstract fun kill()
 
-    val isPlayer:Boolean
-        get() = player != null
+    abstract fun tick()
 
-    fun kill(){
-        if (player != null){
-            player!!.damage(player!!.health)
-        }
-    }
+    abstract fun onGameStart()
 
-    fun tick(){
-        if (survivor == null){
-            return
-        }
-        if (player != null){
-            survivor!!.location = player!!.location
-        }
-    }
+    abstract fun onGameStop()
 
 }

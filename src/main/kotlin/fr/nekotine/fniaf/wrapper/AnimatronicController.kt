@@ -1,8 +1,6 @@
 package fr.nekotine.fniaf.wrapper
 
-import org.bukkit.entity.Player
-
-class AnimatronicController {
+abstract class AnimatronicController {
 
     var animatronic: Animatronic? = null
         set(value) {
@@ -12,18 +10,10 @@ class AnimatronicController {
             }
         }
 
-    var player: Player? = null;
+    abstract fun tick()
 
-    val isPlayer:Boolean
-        get() = player != null
+    abstract fun onGameStart()
 
-    fun tick(){
-        if (animatronic == null){
-            return;
-        }
-        if (player != null){
-            animatronic!!.location = player!!.location
-        }
-    }
+    abstract fun onGameStop()
 
 }
